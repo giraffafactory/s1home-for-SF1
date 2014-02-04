@@ -1,0 +1,218 @@
+<apex:page controller="MtHome" showHeader="false" sidebar="false" standardStylesheets="false">
+<head>
+<!--
+<meta name="viewport" content="width=1024" />
+-->
+<apex:stylesheet value="{!URLFOR($Resource.jquery, 'jquery-ui/css/flick/jquery-ui-1.10.3.custom.css')}" />
+
+<apex:includeScript value="{!URLFOR($Resource.jquery, 'jquery-ui/js/jquery-1.9.1.js')}" />
+<apex:includeScript value="{!URLFOR($Resource.jquery, 'jquery-ui/js/jquery-ui-1.10.3.custom.js')}" />
+<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/i18n/jquery-ui-i18n.min.js"></script>
+<script type="text/javascript">
+$(function() {
+    defaultSetting();
+});
+
+function defaultSetting() {
+    $.datepicker.setDefaults($.datepicker.regional['ja']);
+    $("input[id$='calenderdate']").datepicker({ 
+        dateFormat: 'yy/mm/dd', 
+        showButtonPanel: true,
+        autoclose: true,
+        currentText: "今月",
+        firstDay: 1
+    });
+    $("input[id$='calenderdate']").attr("readonly","readonly");
+}
+
+
+function changeEventJs() {
+//alert($("input[id$='calenderdate']").val());
+    if($("input[id$='calenderdate']").val() != '' && $("input[id$='calenderdate']").val().match(/^\d{4}\/\d{2}\/\d{2}$/)) {
+        changeEvent();
+        return true;
+    } else {
+        alert('日付が正しくありません。');
+        return false;
+    }
+}
+
+function changeTaskJs() {
+    changeTask();
+}
+
+function openTaskJs() {
+    openTask();
+}
+
+</script>
+
+<apex:stylesheet value="{!URLFOR($Resource.MtCommonCss)}" />
+<style type="text/css">
+#contents {
+    position: relative;
+    top: 0px;
+    left: 312px;
+//    z-index: 998;
+}
+</style>
+
+<title>ホーム</title>
+
+</head>
+<body>
+<apex:form style="height: 100%">
+<apex:actionFunction name="changeEvent" action="{!changeEvent}" rerender="div_event" oncomplete="defaultSetting();" />
+<apex:actionFunction name="changeTask" action="{!changeTask}" rerender="div_task" />
+<apex:actionFunction name="openTask" action="{!openTask}" rerender="div_task" />
+<div id="wrapper">
+<!--
+<div id="header">
+    <table class="header_table">
+    <tr>
+        <td class="header_title">
+            ホーム
+        </td>
+        <td class="header_link">
+            <apex:outputLink value="{!$Site.CurrentSiteUrl}MtViewLead" target="_blank">ビュー</apex:outputLink>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+            <apex:outputLink value="{!$Site.CurrentSiteUrl}MtCalendar" target="_blank">活動予定</apex:outputLink>
+            &nbsp;&nbsp;&nbsp;｜&nbsp;&nbsp;&nbsp;
+            <apex:outputLink value="{!$Site.CurrentSiteUrl}m#" target="_blank">Touchホーム</apex:outputLink>
+        </td>
+    </tr>
+    </table>
+</div>
+-->
+
+<div id="main">
+
+    <div id="menu">
+        <div class="menu_title">
+            最近使ったデータ
+        </div>
+        <apex:outputPanel layout="block" rendered="{!IF(rvData != null, false, true)}" styleClass="menu_message">
+            最近使ったデータはありません
+        </apex:outputPanel>
+        <apex:dataList title="AccountList" value="{!rvData}" var="rv">
+            <apex:outputLink value="/{!rv.rvId}" accesskey="1" target="_blank">{!rv.rvName}</apex:outputLink>
+            <!--<a href="{!$Site.CurrentSiteUrl}/{!rv.rvId}" accesskey="1">{!rv.rvName}</a>-->
+        </apex:dataList>
+    </div>
+
+    <div id="contents">
+        <table class="contents_header" cellspacing="0">
+        <tr>
+            <td class="contents_title">
+                カレンダー
+                <!--
+                <input type="button" value="新規行動" onClick="window.open('{!$Site.CurrentSiteUrl}/00U/e')" class="contents_button" />
+                -->
+            </td>
+            <td class="contents_title_right">
+                <label>
+                    <apex:inputText value="{!calendarDate}" id="calenderdate" onChange="changeEventJs();" styleClass="contents_input" />
+                </label>
+            </td>
+        </tr>
+        </table>
+
+        <apex:outputPanel layout="block" id="div_event">
+
+            <apex:outputPanel layout="block" rendered="{!IF(evData != null, false, true)}" styleClass="contents_message">
+                7 日先までの行動予定はありません。
+            </apex:outputPanel>
+
+            <table class="tbl_event" cellspacing="0">
+            <apex:repeat value="{!evData}" var="ev" rendered="{!IF(evData != null, true, false)}">
+                <tr>
+                    <th>
+                        <apex:outputText value="{!ev[0].efWeekDay}  " /><apex:outputText value="{!ev[0].efDate}" />
+                    </th>
+                </tr>
+                <apex:repeat value="{!ev}" var="ev2" rendered="{!IF(ev != null, true, false)}">
+                    <tr>
+                        <td>
+                            <apex:outputText value="{!IF(ev2.efAllDayStr != '', ev2.efAllDayStr, ev2.efStartTime + ' - ' + ev2.efEndTime)}" />&nbsp;&nbsp;<apex:outputLink value="/{!ev2.efId}" target="_blank">{!ev2.efSubject}</apex:outputLink><apex:outputText value="{!ev2.efContinueStr}" />
+                            <apex:outputText value="{!IF(ev2.efWhatWhoId != '', ' : ', '')}" />
+                            <apex:outputLink value="/{!ev2.efWhatWhoId}" target="_blank" rendered="{!IF(ev2.efWhatWhoId != '', true, false)}">{!ev2.efWhatWhoName}</apex:outputLink>
+                        </td>
+                    </tr>
+                </apex:repeat>
+            </apex:repeat>
+            </table>
+
+        </apex:outputPanel>
+        <br />
+        <br />
+
+        <table class="contents_header" cellspacing="0">
+        <tr>
+            <td class="contents_title">
+                ToDo
+                <!--
+                <input type="button" value="新規ToDo" onClick="window.open('{!$Site.CurrentSiteUrl}/00T/e')" class="contents_button" />
+                -->
+            </td>
+            <td class="contents_title_right">
+                <apex:selectList value="{!taskSelectFlg}" size="1" onChange="changeTaskJs();" styleClass="contents_select" >
+                    <apex:selectOptions value="{!taskSelectOptions}"/>
+                </apex:selectList>
+            </td>
+        </tr>
+        </table>
+
+        <apex:outputPanel layout="block" id="div_task">
+
+            <apex:outputPanel layout="block" rendered="{!IF(tskData != null, false, true)}" styleClass="contents_message">
+                該当の ToDo はありません。
+            </apex:outputPanel>
+
+            <apex:outputPanel layout="block" rendered="{!IF(tskData != null, true, false)}">
+                <table class="tbl_task" cellspacing="0">
+                    <tr>
+                        <th width="15%">日付</th>
+                        <th width="30%">件名</th>
+                        <th width="25%">顧客名</th>
+                        <th width="30%">商談名</th>
+                    </tr>
+                    <apex:repeat value="{!tskData}" var="tsk">
+                    <tr>
+                        <td>
+                            <apex:outputtext value="{0, date, yyyy/MM/dd}">
+                                <apex:param value="{!tsk.tskActivityDate}"></apex:param>
+                            </apex:outputtext>
+                        </td>
+                        <td style="word-break: break-all;">
+                            <apex:outputLink value="/{!tsk.tskId}" target="_blank">{!tsk.tskSubject}</apex:outputLink>
+                        </td>
+                        <td style="word-break: break-all;">
+                            <apex:outputLink value="/{!tsk.tskWhoId}" target="_blank">{!tsk.tskWhoName}</apex:outputLink>
+                        </td>
+                        <td style="word-break: break-all;">
+                            <apex:outputLink value="/{!tsk.tskWhatId}" target="_blank">{!tsk.tskWhatName}</apex:outputLink>
+                        </td>
+                    </tr>
+                    </apex:repeat>
+                </table>
+                <apex:outputPanel layout="block" rendered="{!IF((tskData != null) && (tskMoreLinkFlg == true) && (tskOpenFlg != true), true, false)}" styleClass="contents_message">
+                    <a href="#" onClick="openTaskJs();">さらに表示... ≫</a>
+                    <br />
+                </apex:outputPanel>
+            </apex:outputPanel>
+
+        </apex:outputPanel>
+        <br />
+    </div>
+</div>
+
+
+<div id="footer">
+&nbsp;
+</div>
+
+</div>
+</apex:form>
+
+</body>
+</apex:page>
